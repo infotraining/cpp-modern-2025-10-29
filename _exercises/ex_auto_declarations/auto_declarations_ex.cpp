@@ -66,6 +66,8 @@ int main()
     // const auto a16 = vec[0];
     // static_assert(is_same<TODO, decltype(a16)>::value, "Error");
 
+    ///////////////////////////////////////////////////////////////
+
     // auto&& a17 = 7.5;
     // static_assert(is_same<TODO, decltype(a17)>::value, "Error");
 
