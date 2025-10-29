@@ -1,5 +1,9 @@
 # Modern C++ - Szkolenie
 
+## Materiały
+
+* https://cpp-modern.infotraining.pl
+
 ## Konfiguracja środowiska
 
 Proszę wybrać jedną z poniższych opcji:
