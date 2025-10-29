@@ -228,3 +228,4 @@ TEST_CASE("iterating over Triangle")
         std::cout << "(" << v.x << ", " << v.y << ")"; 
     }
 }
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                            

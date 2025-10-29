@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 #include <array>
+#include <map>
 
 using namespace std::literals;
 
@@ -125,4 +126,94 @@ TEST_CASE("std::size")
 
     std::array arr = {1, 2, 3, 4, 5};
     static_assert(StdExplain::size(arr) == 5);
+}
+
+auto foobar_2(int a, int b) -> int
+{
+    return a + b;
+}
+
+template <typename T>
+auto multiply(T a, T b)
+{
+    return a * b;
+}
+
+struct X
+{
+    double value;
+};
+
+struct DifficultToCreate
+{
+    DifficultToCreate() = delete;
+
+    int foo(int x) 
+    { 
+        return x;
+    }
+
+    double foo(double x)
+    {
+        return x;
+    }
+};
+
+TEST_CASE("decltype")
+{
+    const int cx = 42;
+    auto a1 = cx;             // int
+    decltype(cx) dct1 = 665;  // const int 
+
+    std::map<int, std::string> dict = { { 1, "one"}, {2, "two"} };
+    auto a_dict = dict; // std::map<int, std::string>
+    REQUIRE(a_dict.size() == 2);
+
+    decltype(dict) dct_dict; // empty map
+    REQUIRE(dct_dict.size() == 0);
+
+    const int& cref_x = cx;
+    auto a2 = cref_x; // int
+    decltype(auto) dct2 = cref_x;
+
+    X x{3.14};
+    X* ptr_x = &x;
+    decltype(X::value) v1{};
+    decltype(x.value) v2{};
+    decltype(ptr_x->value) v3{};
+
+    decltype(std::declval<DifficultToCreate>().foo(3.14)) y;
+}
+
+auto describe(int n) // std::string describe(int)
+{
+    if (n % 2 == 0)
+        return "even"s;
+    return "odd"s;
+}
+
+TEST_CASE("auto as return type")
+{
+    auto description = describe(8);
+    REQUIRE(description == "even"s);
+}
+
+template <typename TContainer>
+decltype(auto) get_nth(TContainer& container, size_t n)
+{
+    return container[n];
+}
+
+TEST_CASE("why it does not work")
+{
+    std::vector vec = {1, 2, 3, 4, 5};
+    REQUIRE(get_nth(vec, 1) == 2);
+
+    std::vector<std::string> words = {"zero", "one"};
+    get_nth(words, 1) = "jeden";
+    REQUIRE(words[1] == "jeden");
+
+    std::vector<bool> flags = {true, false, false, true};
+    get_nth(flags, 1) = true;
+    REQUIRE(flags[1] == true);
 }
