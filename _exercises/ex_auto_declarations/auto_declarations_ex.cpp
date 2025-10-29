@@ -12,11 +12,11 @@ const vector<int> cvec = {1, 2, 3};
 
 using TODO = void;
 
-const int* ptr_to_const = &x;
-int const* ptr_to_const = &x;
+const int* ptr_to_const_west = &x;
+int const* ptr_to_const_east = &x;
 int* const const_ptr = &x;
-const int* const const_ptr_to_const = &x;
-int const* const const_ptr_to_const = &x;
+const int* const const_ptr_to_const_west = &x;
+int const* const const_ptr_to_const_east = &x;
 
 int main()
 {
