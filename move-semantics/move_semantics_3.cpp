@@ -16,6 +16,8 @@ public:
     using iterator = int*;
     using const_iterator = const int*;
 
+    Data() = default;
+
     Data(std::string name, std::initializer_list<int> list)
         : name_{std::move(name)}
         , data_{new int[list.size()]}
@@ -121,6 +123,11 @@ public:
         std::swap(size_, other.size_);
     }
 
+    const std::string& name() const
+    {
+        return name_;
+    }
+
     iterator begin()
     {
         return data_;
@@ -178,5 +185,108 @@ TEST_CASE("Data & move semantics")
 
     target = Data{"ds2", {3, 4, 535, 65, 765, 665}};
     print(target, "target");
-    
+}
+
+class DataSet
+{
+    Data row_1;
+    Data row_2;
+    Data row_3;
+
+public:
+    DataSet(Data r1, Data r2, Data r3)
+        : row_1(std::move(r1))
+        , row_2(std::move(r2))
+        , row_3(std::move(r3))
+    {
+    }
+
+    // DataSet(const Data& r1, const Data& r2, const Data& r3)
+    //     : row_1(r1)
+    //     , row_2(r2)
+    //     , row_3(r3)
+    // {
+    // }
+
+    void print() const
+    {
+        ::print(row_1, row_1.name());
+        ::print(row_2, row_2.name());
+        ::print(row_3, row_3.name());
+    }
+};
+
+TEST_CASE("DataSet")
+{
+    SECTION("passing lvalue")
+    {
+        Data row_1{"row_1", {1, 2, 3}};
+        Data row_2{"row_2", {55, 26, 73}};
+        Data row_3{"row_3", {16, 72, 38}};
+
+        DataSet ds1{std::move(row_1), std::move(row_2), std::move(row_3)};
+
+        ds1.print();
+    }
+
+    SECTION("passing rvalue")
+    {
+        DataSet ds1(Data{"row_1", {1, 2, 3}}, Data{"row_2", {65, 43, 2}}, Data{"row_3", {1, 2, 3, 4}});
+        ds1.print();
+    }
+}
+
+void foo(const std::string& str, const std::vector<int>& vec)
+{
+    std::cout << str << " " << vec.size() << "\n";
+}
+
+namespace SuperOptimal
+{
+    void foo_transfer(const std::string& str, const std::vector<int>& vec)
+    {
+        std::string str_local = str;
+        std::vector<int> vec_local = vec;
+    }
+
+    void foo_transfer(std::string&& str, const std::vector<int>& vec)
+    {
+        std::string str_local = std::move(str);
+        std::vector<int> vec_local = vec;
+    }
+
+    void foo_transfer(const std::string& str, std::vector<int>&& vec)
+    {
+        std::string str_local = str;
+        std::vector<int> vec_local = std::move(vec);
+    }
+
+    void foo_transfer(std::string&& str, std::vector<int>&& vec)
+    {
+        std::string str_local = std::move(str);
+        std::vector<int> vec_local = std::move(vec);
+    }
+} // namespace SuperOptimal
+
+inline namespace CompromiseImpl
+{
+    void foo_transfer(std::string str, std::vector<int> vec)
+    {
+        std::string str_local = std::move(str);
+        std::vector<int> vec_local = std::move(vec);
+    }
+}
+
+TEST_CASE("foo with value semantics")
+{
+    using namespace std::literals;
+
+    auto str = "text"s;
+    std::vector vec = {1, 2, 3};
+
+    foo(str, vec);
+
+    foo_transfer(str, std::move(vec));
+
+    foo_transfer("text"s, std::vector{1, 2, 3});
 }
