@@ -91,8 +91,8 @@ TEST_CASE("uniform init syntax")
 
 TEST_CASE("initializer_list")
 {
-    std::initializer_list<int> lst = {1, 2, 3, 4, 5};
-    auto alst = {1, 2, 3, 4, 5};
+    std::initializer_list<int> lst_1 = {1, 2, 3, 4, 5};
+    auto lst_2 = {1, 2, 3, 4, 5};
 
     auto numbers = {1.0, 2.3, 3.44, static_cast<double>(9)};
 }
