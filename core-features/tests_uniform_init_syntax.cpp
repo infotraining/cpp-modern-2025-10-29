@@ -113,6 +113,9 @@ public:
         std::copy(lst.begin(), lst.end(), items_);
     }
 
+    Container(const Container&) = delete;
+    Container& operator=(const Container&) = delete;
+
     ~Container()
     {
         delete[] items_;
@@ -169,6 +172,8 @@ TEST_CASE("initializer_list")
 
     Container container = {1, 2, 3, 4, 5, 6, 7};
     REQUIRE(container[3] == 4);
+
+    //Container other_container = container;
 
     std::vector expected = {1, 2, 3, 4, 5, 6, 7};
     REQUIRE(std::equal(container.begin(), container.end(), expected.begin(), expected.end()));
