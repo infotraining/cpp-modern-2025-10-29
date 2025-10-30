@@ -1,6 +1,6 @@
+#include <algorithm>
 #include <catch2/catch_test_macros.hpp>
 #include <iostream>
-#include <algorithm>
 #include <string_view>
 
 ////////////////////////////////////////////////////////////////////////////
@@ -17,7 +17,8 @@ public:
     using const_iterator = const int*;
 
     Data(std::string name, std::initializer_list<int> list)
-        : name_{std::move(name)}, data_{new int[list.size()]}
+        : name_{std::move(name)}
+        , data_{new int[list.size()]}
         , size_{list.size()}
     {
         std::copy(list.begin(), list.end(), data_);
@@ -37,10 +38,21 @@ public:
 
     Data& operator=(const Data& other)
     {
-        Data temp(other);
+        Data temp{other};
         swap(temp);
-
         std::cout << "Data=(" << name_ << ": cc)\n";
+
+        // if (this != &other)
+        // {
+        //     delete[] data_;
+
+        //     name_ = other.name_;
+        //     size_ = other.size_;
+
+        //     data_ = new int[size_];
+        //     std::copy(other.data_, other.data_ + size_, data_);
+
+        // }
 
         return *this;
     }
@@ -51,7 +63,7 @@ public:
 
     /////////////////////////////////////////////////
     // move assignment - TODO
-    
+
     ~Data()
     {
         delete[] data_;
@@ -108,15 +120,14 @@ void print(const TContainer& container, std::string_view prefix = "items")
     std::cout << "]\n";
 }
 
-// TEST_CASE("3---")
-// {
-//     std::cout << "\n--------------------------\n\n";
-// }
+TEST_CASE("Data & move semantics")
+{
+    Data ds1{"ds1", {1, 2, 3, 4, 5}};
+    print(ds1, "ds1");
 
-// TEST_CASE("Data & move semantics")
-// {
-//     Data ds1{"ds1", {1, 2, 3, 4, 5}};
+    Data backup = ds1; // copy
+    print(backup, "backup");
 
-//     Data backup = ds1; // copy
-//     print("backup", backup);
-// }
+    Data target = std::move(ds1);
+    print(target, "target");
+}
