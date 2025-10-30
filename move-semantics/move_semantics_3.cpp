@@ -9,8 +9,8 @@
 class Data
 {
     std::string name_;
-    int* data_;
-    size_t size_;
+    int* data_{};
+    size_t size_{};
 
 public:
     using iterator = int*;
@@ -59,13 +59,58 @@ public:
 
     /////////////////////////////////////////////////
     // move constructor - TODO
-    
+    Data(Data&& other)
+        : name_{std::move(other.name_)}
+        , data_{other.data_}
+        , size_{other.size_}
+    {
+        other.data_ = nullptr;
+        other.size_ = 0;
+
+        std::cout << "Data(" << name_ << ": mv)\n";
+    }
 
     /////////////////////////////////////////////////
     // move assignment - TODO
+    // Data& operator=(Data&& other)
+    // {
+    //     if (this != &other)
+    //     {
+    //         name_ = std::move(other.name_);
+
+    //         delete[] data_;
+    //         data_ = other.data_;
+    //         other.data_ = nullptr;
+
+    //         size_ = other.size_;
+    //         other.size_ = 0;
+    //     }
+
+    //     std::cout << "Data=(" << name_ << ": mv)\n";
+
+    //     return *this;
+    // }
+
+    Data& operator=(Data&& other)
+    {
+        if (this != &other)
+        {
+            Data temp{std::move(other)};
+            swap(temp);
+        }
+
+        std::cout << "Data=(" << name_ << ": move)\n";
+
+        return *this;
+    }
 
     ~Data()
     {
+        if (data_)
+            std::cout << "~Data(" << name_ << ")\n";
+        else
+            std::cout << "~Data(after move)\n";
+
         delete[] data_;
     }
 
@@ -130,4 +175,8 @@ TEST_CASE("Data & move semantics")
 
     Data target = std::move(ds1);
     print(target, "target");
+
+    target = Data{"ds2", {3, 4, 535, 65, 765, 665}};
+    print(target, "target");
+    
 }
