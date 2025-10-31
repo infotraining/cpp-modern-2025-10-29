@@ -42,20 +42,8 @@ public:
     {
         Data temp{other};
         swap(temp);
+        
         std::cout << "Data=(" << name_ << ": cc)\n";
-
-        // if (this != &other)
-        // {
-        //     delete[] data_;
-
-        //     name_ = other.name_;
-        //     size_ = other.size_;
-
-        //     data_ = new int[size_];
-        //     std::copy(other.data_, other.data_ + size_, data_);
-
-        // }
-
         return *this;
     }
 
@@ -243,30 +231,48 @@ void foo(const std::string& str, const std::vector<int>& vec)
 
 namespace SuperOptimal
 {
-    void foo_transfer(const std::string& str, const std::vector<int>& vec)
-    {
-        std::string str_local = str;
-        std::vector<int> vec_local = vec;
+    void foo_transfer(const std::string& str,  const std::vector<int>& vec) 
+    {                 /* bounds to lvalue */   /* bounds to lvalue       */
+        std::string str_local = str;        // lvalue copied to str_local
+        std::vector<int> vec_local = vec;   // lvalue copied to vec_local
     }
 
-    void foo_transfer(std::string&& str, const std::vector<int>& vec)
-    {
-        std::string str_local = std::move(str);
-        std::vector<int> vec_local = vec;
+    void foo_transfer(std::string&& str,       const std::vector<int>& vec)
+    {                 /* bounds to rvalue */    /* bounds to lvalue   */
+        std::string str_local = std::move(str);  // xvalue transferred to str_local
+        std::vector<int> vec_local = vec;        // lvalue copied to vec_local
     }
 
-    void foo_transfer(const std::string& str, std::vector<int>&& vec)
-    {
-        std::string str_local = str;
-        std::vector<int> vec_local = std::move(vec);
+    void foo_transfer(const std::string& str,   std::vector<int>&& vec)
+    {                 /* bounds to lvalue */    /* bounds to rvalue */
+        std::string str_local = str;                 // lvalue copied to str_local
+        std::vector<int> vec_local = std::move(vec); // xvalue transferred to vec_local
     }
 
     void foo_transfer(std::string&& str, std::vector<int>&& vec)
-    {
-        std::string str_local = std::move(str);
-        std::vector<int> vec_local = std::move(vec);
+    {                 /* bounds to rvalue */  /* bounds to rvalue */
+        std::string str_local = std::move(str);       // xvalue transferred to str_local
+        std::vector<int> vec_local = std::move(vec);  // xvalue transfered to vec_local
     }
 } // namespace SuperOptimal
+
+TEST_CASE("foo_transfer with optimal overloads")
+{
+    using namespace std::literals;
+    using SuperOptimal::foo_transfer;
+
+
+    auto str = "text"s;
+    std::vector vec = {1, 2, 3};
+
+    foo_transfer(str, vec);                       // foo_transfer(const string&, const vector<int>&)
+    foo_transfer("text"s, vec);                   // foo_transfer(std::string&&, const vector<int>&)
+    foo_transfer(std::move(str), vec);            // foo_transfer(std::string&&, const vector<int>&)
+    foo_transfer(str, std::vector{1, 2, 3});      // foo_transfer(const string&, std::vector<int>&&)
+    foo_transfer(str, std::move(vec));            // foo_transfer(const string&, std::vector<int>&&)
+    foo_transfer("text"s, std::vector{1, 2, 3});  // foo_transfer(std::string&&, std::vector<int>&&)
+    foo_transfer(std::move(str), std::move(vec)); // foo_transfer(std::string&&, std::vector<int>&&)
+}
 
 inline namespace CompromiseImpl
 {
@@ -277,16 +283,16 @@ inline namespace CompromiseImpl
     }
 }
 
-TEST_CASE("foo with value semantics")
+TEST_CASE("foo_transfer with value semantics - compromise implementation")
 {
     using namespace std::literals;
 
     auto str = "text"s;
     std::vector vec = {1, 2, 3};
 
-    foo(str, vec);
-
-    foo_transfer(str, std::move(vec));
-
-    foo_transfer("text"s, std::vector{1, 2, 3});
+    foo_transfer(str, vec);                       // copies of both lvalues to arguments, then moves inside
+    foo_transfer("text"s, vec);                   // RVO, copy of vector, then move inside
+    foo_transfer(std::move(str), vec);            // move of string, copy of vector, then move inside
+    foo_transfer(str, std::vector{1, 2, 3});      // copy of string, RVO, then moves inside
+    foo_transfer("text"s, std::vector{1, 2, 3});  // RVO, RVO, then moves inside
 }
