@@ -476,3 +476,29 @@ TEST_CASE("noexcept")
         vec.push_back(Data{"d5", {1, 2, 3}});
     }
 }
+
+struct SafeBar
+{
+    void bar() noexcept
+    {}
+};
+
+struct UnsafeBar
+{
+    void bar()
+    {}
+};
+
+template <typename T>
+void foo_maybe_safe(T obj) noexcept(noexcept(obj.bar()))
+{
+    obj.bar();
+}
+
+TEST_CASE("noexcept as operator")
+{
+    foo_maybe_safe(SafeBar{});
+    foo_maybe_safe(UnsafeBar{});
+
+
+}

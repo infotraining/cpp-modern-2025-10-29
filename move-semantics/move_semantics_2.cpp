@@ -12,16 +12,16 @@ namespace StdExplain
         T* ptr_;
 
     public:
-        UniquePtr(nullptr_t)
+        UniquePtr(nullptr_t) noexcept
             : ptr_{nullptr}
         {
         }
 
-        UniquePtr()
+        UniquePtr() noexcept
             : ptr_{nullptr}
         { }
 
-        explicit UniquePtr(T* ptr)
+        explicit UniquePtr(T* ptr) noexcept
             : ptr_{ptr}
         {
         }
@@ -30,14 +30,14 @@ namespace StdExplain
         UniquePtr& operator=(const UniquePtr&) = delete;
 
         // move constructor
-        UniquePtr(UniquePtr&& other)
+        UniquePtr(UniquePtr&& other) noexcept
             : ptr_{other.ptr_}
         {
             other.ptr_ = nullptr;
         }
 
         // move assignment operator
-        UniquePtr& operator=(UniquePtr&& other)
+        UniquePtr& operator=(UniquePtr&& other) noexcept
         {
             if (this != &other)
             {
@@ -51,27 +51,27 @@ namespace StdExplain
             return *this;
         }
 
-        ~UniquePtr()
+        ~UniquePtr() noexcept
         {
             delete ptr_;
         }
 
-        explicit operator bool() const
+        explicit operator bool() const noexcept
         {
             return ptr_ != nullptr;
         }
 
-        T* get() const
+        T* get() const noexcept
         {
             return ptr_;
         }
 
-        T* operator->() const
+        T* operator->() const noexcept
         {
             return ptr_;
         }
 
-        T& operator*() const
+        T& operator*() const noexcept
         {
             return *ptr_;
         }
