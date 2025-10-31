@@ -4,90 +4,116 @@
 #include <memory>
 #include <string>
 
-template <typename T>
-class UniquePtr
+namespace StdExplain
 {
-    T* ptr_;
-
-public:
-    UniquePtr(nullptr_t)
-        : ptr_{nullptr}
+    template <typename T>
+    class UniquePtr
     {
-    }
+        T* ptr_;
 
-    UniquePtr()
-        : ptr_{nullptr}
-    { }
-
-    explicit UniquePtr(T* ptr)
-        : ptr_{ptr}
-    {
-    }
-
-    UniquePtr(const UniquePtr&) = delete;
-    UniquePtr& operator=(const UniquePtr&) = delete;
-
-    // move constructor
-    UniquePtr(UniquePtr&& other)
-        : ptr_{other.ptr_}
-    {
-        other.ptr_ = nullptr;
-    }
-
-    // move assignment operator
-    UniquePtr& operator=(UniquePtr&& other)
-    {
-        if (this != &other)
+    public:
+        UniquePtr(nullptr_t)
+            : ptr_{nullptr}
         {
-            delete ptr_; // destroying previous state
+        }
 
-            // moving the state from other to *this
-            ptr_ = other.ptr_;
+        UniquePtr()
+            : ptr_{nullptr}
+        { }
+
+        explicit UniquePtr(T* ptr)
+            : ptr_{ptr}
+        {
+        }
+
+        UniquePtr(const UniquePtr&) = delete;
+        UniquePtr& operator=(const UniquePtr&) = delete;
+
+        // move constructor
+        UniquePtr(UniquePtr&& other)
+            : ptr_{other.ptr_}
+        {
             other.ptr_ = nullptr;
         }
 
-        return *this;
-    }
+        // move assignment operator
+        UniquePtr& operator=(UniquePtr&& other)
+        {
+            if (this != &other)
+            {
+                delete ptr_; // destroying previous state
 
-    ~UniquePtr()
+                // moving the state from other to *this
+                ptr_ = other.ptr_;
+                other.ptr_ = nullptr;
+            }
+
+            return *this;
+        }
+
+        ~UniquePtr()
+        {
+            delete ptr_;
+        }
+
+        explicit operator bool() const
+        {
+            return ptr_ != nullptr;
+        }
+
+        T* get() const
+        {
+            return ptr_;
+        }
+
+        T* operator->() const
+        {
+            return ptr_;
+        }
+
+        T& operator*() const
+        {
+            return *ptr_;
+        }
+    };
+
+    template <typename T>
+    UniquePtr<T> make_unique()
     {
-        delete ptr_;
+        return UniquePtr<T>(new T());
     }
 
-    explicit operator bool() const
+    template <typename T, typename TArg1>
+    UniquePtr<T> make_unique(TArg1&& arg1)
     {
-        return ptr_ != nullptr;
+        return UniquePtr<T>(new T(std::forward<TArg1>(arg1)));
     }
 
-    T* get() const
+    template <typename T, typename TArg1, typename TArg2>
+    UniquePtr<T> make_unique(TArg1&& arg1, TArg2&& arg2)
     {
-        return ptr_;
+        return UniquePtr<T>(new T(std::forward<TArg1>(arg1), std::forward<TArg2>(arg2)));
     }
 
-    T* operator->() const
+    UniquePtr<Gadget> create_gadget()
     {
-        return ptr_;
+        static int gen_id = 1000;
+        const int id = ++gen_id;
+        UniquePtr<Gadget> ptr_gadget{new Gadget(id, "Gadget#" + std::to_string(id))};
+        return ptr_gadget;
     }
-
-    T& operator*() const
-    {
-        return *ptr_;
-    }
-};
-
-UniquePtr<Gadget> create_gadget()
-{
-    static int gen_id = 1000;
-    const int id = ++gen_id;
-    UniquePtr<Gadget> ptr_gadget{new Gadget(id, "Gadget#" + std::to_string(id))};
-    return ptr_gadget;
-}
+} // namespace StdExplain
 
 TEST_CASE("move semantics - UniquePtr")
 {
+    using StdExplain::UniquePtr;
+    using StdExplain::create_gadget;
+
+
     UniquePtr<int> ptr_int = nullptr;
 
-    UniquePtr<Gadget> pg1{new Gadget{1, "ipad"}};
+    // UniquePtr<Gadget> pg1{new Gadget{1, "ipad"}};
+    auto pg1 = StdExplain::make_unique<Gadget>(1, "ipad");
     pg1->use();
     (*pg1).use();
 

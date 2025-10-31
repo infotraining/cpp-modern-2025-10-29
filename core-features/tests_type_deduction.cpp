@@ -36,6 +36,12 @@ void deduce_2(T& arg)
     std::cout << __PRETTY_FUNCTION__ << "\n";
 }
 
+template <typename T>
+void deduce_3(T&& arg)  // T&& is used in type deduction context
+{
+    std::cout << __PRETTY_FUNCTION__ << "\n";
+}
+
 namespace Cpp20
 {
     void deduce_1(auto arg)
@@ -99,6 +105,18 @@ TEST_CASE("auto - type deduction - case 2")
 
     auto& a6 = foobar; // void(&)(int)
     deduce_2(foobar);
+}
+
+TEST_CASE("auto - type deduction - case 3")
+{
+    std::string str = "text";
+
+    deduce_3(str); // passing lvalue -> deduce_3<std::string&>(std::string& && -> std::string&) 
+                   // => deduce_3<std::string&>(std::string&)
+    auto&& universal_ref_1 = str; // std::string&
+
+    deduce_3("text"s); // passing rvalue -> deduce_3<std::string>(std::string&&)
+    auto&& universal_ref_2 = "text"s; // std::string&&
 }
 
 namespace StdExplain 

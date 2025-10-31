@@ -148,7 +148,7 @@ public:
 
     T& operator[](size_t index)
     {
-        return items_[index];
+        return *(items_ + index);
     }
 
     const T& operator[](size_t index) const

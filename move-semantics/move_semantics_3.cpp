@@ -42,7 +42,7 @@ public:
     {
         Data temp{other};
         swap(temp);
-        
+
         std::cout << "Data=(" << name_ << ": cc)\n";
         return *this;
     }
@@ -222,6 +222,19 @@ TEST_CASE("DataSet")
         DataSet ds1(Data{"row_1", {1, 2, 3}}, Data{"row_2", {65, 43, 2}}, Data{"row_3", {1, 2, 3, 4}});
         ds1.print();
     }
+
+    SECTION("move semantics by default")
+    {
+        Data row_1{"row_1", {1, 2, 3}};
+        Data row_2{"row_2", {55, 26, 73}};
+        Data row_3{"row_3", {16, 72, 38}};
+
+        DataSet ds1{std::move(row_1), std::move(row_2), std::move(row_3)};
+
+        std::cout << "---------------\n";
+
+        DataSet target_ds1 = std::move(ds1);
+    }
 }
 
 void foo(const std::string& str, const std::vector<int>& vec)
@@ -229,38 +242,48 @@ void foo(const std::string& str, const std::vector<int>& vec)
     std::cout << str << " " << vec.size() << "\n";
 }
 
-namespace SuperOptimal
+namespace SuperOptimalHandwired
 {
-    void foo_transfer(const std::string& str,  const std::vector<int>& vec) 
-    {                 /* bounds to lvalue */   /* bounds to lvalue       */
-        std::string str_local = str;        // lvalue copied to str_local
-        std::vector<int> vec_local = vec;   // lvalue copied to vec_local
+    void foo_transfer(const std::string& str, const std::vector<int>& vec)
+    { /* bounds to lvalue */              /* bounds to lvalue       */
+        std::string str_local = str;      // lvalue copied to str_local
+        std::vector<int> vec_local = vec; // lvalue copied to vec_local
     }
 
-    void foo_transfer(std::string&& str,       const std::vector<int>& vec)
-    {                 /* bounds to rvalue */    /* bounds to lvalue   */
-        std::string str_local = std::move(str);  // xvalue transferred to str_local
-        std::vector<int> vec_local = vec;        // lvalue copied to vec_local
+    void foo_transfer(std::string&& str, const std::vector<int>& vec)
+    { /* bounds to rvalue */                    /* bounds to lvalue   */
+        std::string str_local = std::move(str); // xvalue transferred to str_local
+        std::vector<int> vec_local = vec;       // lvalue copied to vec_local
     }
 
-    void foo_transfer(const std::string& str,   std::vector<int>&& vec)
-    {                 /* bounds to lvalue */    /* bounds to rvalue */
+    void foo_transfer(const std::string& str, std::vector<int>&& vec)
+    { /* bounds to lvalue */                         /* bounds to rvalue */
         std::string str_local = str;                 // lvalue copied to str_local
         std::vector<int> vec_local = std::move(vec); // xvalue transferred to vec_local
     }
 
     void foo_transfer(std::string&& str, std::vector<int>&& vec)
-    {                 /* bounds to rvalue */  /* bounds to rvalue */
-        std::string str_local = std::move(str);       // xvalue transferred to str_local
-        std::vector<int> vec_local = std::move(vec);  // xvalue transfered to vec_local
+    { /* bounds to rvalue */                         /* bounds to rvalue */
+        std::string str_local = std::move(str);      // xvalue transferred to str_local
+        std::vector<int> vec_local = std::move(vec); // xvalue transfered to vec_local
     }
-} // namespace SuperOptimal
+} // namespace SuperOptimalHandwired
+
+namespace SuperOptimal
+{
+    template<typename TArg1, typename TArg2>
+    void foo_transfer(TArg1&& arg1, TArg2&& arg2)
+    {
+        std::string str_local = std::forward<TArg1>(arg1);      // lvalue copied to str_local
+        std::vector<int> vec_local = std::forward<TArg2>(arg2); // lvalue copied to vec_local
+    }
+
+} // namespace SuperOptimalHandwired
 
 TEST_CASE("foo_transfer with optimal overloads")
 {
     using namespace std::literals;
-    using SuperOptimal::foo_transfer;
-
+    using SuperOptimalHandwired::foo_transfer;
 
     auto str = "text"s;
     std::vector vec = {1, 2, 3};
@@ -281,7 +304,7 @@ inline namespace CompromiseImpl
         std::string str_local = std::move(str);
         std::vector<int> vec_local = std::move(vec);
     }
-}
+} // namespace CompromiseImpl
 
 TEST_CASE("foo_transfer with value semantics - compromise implementation")
 {
@@ -290,9 +313,137 @@ TEST_CASE("foo_transfer with value semantics - compromise implementation")
     auto str = "text"s;
     std::vector vec = {1, 2, 3};
 
-    foo_transfer(str, vec);                       // copies of both lvalues to arguments, then moves inside
-    foo_transfer("text"s, vec);                   // RVO, copy of vector, then move inside
-    foo_transfer(std::move(str), vec);            // move of string, copy of vector, then move inside
-    foo_transfer(str, std::vector{1, 2, 3});      // copy of string, RVO, then moves inside
-    foo_transfer("text"s, std::vector{1, 2, 3});  // RVO, RVO, then moves inside
+    foo_transfer(str, vec);                      // copies of both lvalues to arguments, then moves inside
+    foo_transfer("text"s, vec);                  // RVO, copy of vector, then move inside
+    foo_transfer(std::move(str), vec);           // move of string, copy of vector, then move inside
+    foo_transfer(str, std::vector{1, 2, 3});     // copy of string, RVO, then moves inside
+    foo_transfer("text"s, std::vector{1, 2, 3}); // RVO, RVO, then moves inside
+}
+
+namespace StdExplain
+{
+    template <typename T>
+    std::remove_reference_t<T>&& move(T&& value)
+    {
+        return static_cast<std::remove_reference_t<T>&&>(value);
+    }
+}
+
+TEST_CASE("move - how it works")
+{
+    std::string str = "text";
+    std::string target_str = StdExplain::move(str); // static_cast<std::string&&>(str)
+    REQUIRE(str.empty());
+
+    int x = 42;
+    int target_x = std::move(x); // primitive types are copied
+
+    Data ds{"ds", {1, 2, 3, 4}};
+    Data target_ds = std::move(ds); // delegetion to Data move semantics - move constructor called
+
+    const Data cds{"cds", {1, 2, 3, 4}};
+    Data target_cds = std::move(cds); // copy - underlying object is const - copy constructor called
+}
+
+struct Person
+{
+    int id{};
+    std::string name;
+    std::vector<std::string> friends;
+    Data data{"data", {1, 2, 3}};
+
+    Person() = default;
+
+    Person(int id, std::string name, std::vector<std::string> friends)
+        : id{id}
+        , name{std::move(name)}
+        , friends{std::move(friends)}
+    { }
+
+    // Person(const Person&) = default;
+    // Person& operator=(const Person&) = default;
+    // Person(Person&&) = default;
+    // Person& operator=(Person&&) = default;
+
+    // ~Person()
+    // {
+    //     std::cout << "~Person(id: " << id << ", name: '" << name << "')\n";
+    // }
+
+    void print() const
+    {
+        //...
+    }
+};
+
+TEST_CASE("Person")
+{
+    Person default_p;
+    Person p1{42, "Jan", {"Adam", "Ewa"}};
+
+    Person p2 = p1; // cc
+    std::cout << "------\n";
+    Person p3 = std::move(p1); // mv
+}
+
+struct Matrix
+{
+    std::vector<std::vector<int>> data_;
+
+public:
+    Matrix(size_t dim)
+        : data_(dim, std::vector<int>(dim))
+    { }
+
+    std::vector<int>& operator[](size_t index)
+    {
+        return data_[index];
+    }
+
+    const std::vector<int>& operator[](size_t index) const
+    {
+        return data_[index];
+    }
+};
+
+namespace LegacyCode
+{
+    Matrix* create_matrix(size_t dim)
+    {
+        Matrix* m = new Matrix(1000);
+
+        //...
+        return m;
+    }
+} // namespace LegacyCode
+
+namespace ModernCpp
+{
+    Matrix create_matrix(size_t dim)
+    {
+        Matrix m(1000);
+
+        //...
+        return m;
+    }
+} // namespace ModernCpp
+
+TEST_CASE("Matrix")
+{
+    SECTION("Legacy code")
+    {
+        Matrix* m = LegacyCode::create_matrix(1000);
+
+        // delete[] m; // UB
+
+        // m[0][1] = 1000; // UB
+    }
+
+    SECTION("Modern Cpp")
+    {
+        {
+            Matrix m = ModernCpp::create_matrix(1000);
+            m[0][1] = 1000;
+        }
+    }
 }

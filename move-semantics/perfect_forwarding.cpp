@@ -1,60 +1,108 @@
-#include <catch2/catch_test_macros.hpp>
 #include "gadget.hpp"
 
-//#define MSVC
+#include <catch2/catch_test_macros.hpp>
+
+// #define MSVC
 
 #if !defined(__PRETTY_FUNCTION__) && !defined(__GNUC__)
 #define __PRETTY_FUNCTION__ __FUNCSIG__
 #endif
-
 
 ////////////////////////////////////////////////////////
 ///  PERFECT FORWARDING
 
 void have_fun(Gadget& g)
 {
-    puts(__PRETTY_FUNCTION__);
+    std::cout << __PRETTY_FUNCTION__ << "\n";
     g.use();
 }
 
 void have_fun(const Gadget& cg)
 {
-    puts(__PRETTY_FUNCTION__);
+    std::cout << __PRETTY_FUNCTION__ << "\n";
     cg.use();
 }
 
 void have_fun(Gadget&& g)
 {
-    puts(__PRETTY_FUNCTION__);
+    std::cout << __PRETTY_FUNCTION__ << "\n";
     g.use();
 }
 
-void use(Gadget& g)
+namespace HandwiredForwarding
 {
-    have_fun(g);
+    void use(Gadget& g)
+    {
+        have_fun(g);
+    }
+
+    void use(const Gadget& g)
+    {
+        have_fun(g);
+    }
+
+    void use(Gadget&& g)
+    {
+        have_fun(std::move(g));
+    }
+} // namespace HandwiredForwarding
+
+namespace PerfectForwarding
+{
+    namespace StdExplain
+    {
+        // template <typename T>
+        // decltype(auto) forward(T&& value)
+        // {
+        //     if constexpr (std::is_lvalue_reference_v<T>)
+        //         return value;
+        //     else
+        //         return std::move(value);
+        // }
+    } // namespace StdExplain
+
+    template <typename TGadget>
+    void use(TGadget&& g)
+    {
+        have_fun(std::forward<TGadget>(g));
+    }
+} // namespace PerfectForwarding
+
+TEST_CASE("custom forwarding")
+{
+    Gadget g{1, "gadget"};
+    const Gadget cg{2, "const-gadget"};
+
+    using namespace PerfectForwarding;
+
+    use(g);
+    use(cg);
+    use(Gadget{3, "temp-gadget"});
 }
 
-void use(const Gadget& g)
+template <typename T>
+void collapse(T& obj)
 {
-    have_fun(g);
+    std::cout << __PRETTY_FUNCTION__ << "\n";
 }
 
-void use(Gadget&& g)
+TEST_CASE("reference collapsing")
 {
-    have_fun(std::move(g));
+    int x = 42;
+    collapse<int>(x);
+    collapse<int&>(x);
+    collapse<int&&>(x);
 }
 
-// TEST_CASE("4---")
-// {
-//     std::cout << "\n--------------------------\n\n";
-// }
+TEST_CASE("std::vector & forwarding")
+{
+    std::vector<Gadget> gadgets;
 
-// TEST_CASE("custom forwarding")
-// {
-//     Gadget g{1, "gadget"};
-//     const Gadget cg{2, "const-gadget"};
+    Gadget g{42, "ipad"};
+    gadgets.push_back(g);
 
-//     use(g);
-//     use(cg);
-//     use(Gadget{3, "temp-gadget"});
-// }
+    gadgets.push_back(std::move(g));
+    gadgets.push_back(Gadget{665, "smartwatch"});
+
+    gadgets.emplace_back(667, "big watch");
+}
