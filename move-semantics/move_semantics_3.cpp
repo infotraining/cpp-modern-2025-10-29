@@ -49,15 +49,15 @@ public:
 
     /////////////////////////////////////////////////
     // move constructor - TODO
-    Data(Data&& other)
-        : name_{std::move(other.name_)}
-        , data_{other.data_}
-        , size_{other.size_}
+    Data(Data&& other) noexcept
+        : name_{std::move(other.name_)} // noexcept
+        , data_{other.data_}  // noexcept
+        , size_{other.size_}  // noexcept
     {
-        other.data_ = nullptr;
-        other.size_ = 0;
+        other.data_ = nullptr;  // noexcept
+        other.size_ = 0;        // noexcept
 
-        std::cout << "Data(" << name_ << ": mv)\n";
+        //std::cout << "Data(" << name_ << ": mv)\n";
     }
 
     /////////////////////////////////////////////////
@@ -85,7 +85,7 @@ public:
     {
         if (this != &other)
         {
-            Data temp{std::move(other)};
+            Data temp{std::move(other)}; // noexcept
             swap(temp);
         }
 
@@ -104,39 +104,39 @@ public:
         delete[] data_;
     }
 
-    void swap(Data& other)
+    void swap(Data& other) noexcept
     {
         name_.swap(other.name_);
         std::swap(data_, other.data_);
         std::swap(size_, other.size_);
     }
 
-    const std::string& name() const
+    const std::string& name() const noexcept
     {
         return name_;
     }
 
-    iterator begin()
+    iterator begin() noexcept
     {
         return data_;
     }
 
-    iterator end()
+    iterator end() noexcept
     {
         return data_ + size_;
     }
 
-    const_iterator begin() const
+    const_iterator begin() const noexcept
     {
         return data_;
     }
 
-    const_iterator end() const
+    const_iterator end() const noexcept
     {
         return data_ + size_;
     }
 
-    size_t size() const
+    size_t size() const noexcept
     {
         return size_;
     }
@@ -445,5 +445,34 @@ TEST_CASE("Matrix")
             Matrix m = ModernCpp::create_matrix(1000);
             m[0][1] = 1000;
         }
+    }
+}
+
+void foo_safe() noexcept
+{
+    std::vector<int> vec;
+
+    vec.at(100) = 100;
+    //throw std::runtime_error("Error#13");
+}
+
+TEST_CASE("noexcept")
+{
+    std::vector<Data> vec;
+
+    vec.push_back(Data{"d1", {1, 2, 3}});
+    std::cout << "------------\n";
+    vec.push_back(Data{"d2", {1, 2, 3}});
+    std::cout << "------------\n";
+    vec.push_back(Data{"d3", {1, 2, 3}});
+    std::cout << "------------\n";
+    vec.push_back(Data{"d4", {1, 2, 3}});
+    std::cout << "------------\n";
+    vec.push_back(Data{"d5", {1, 2, 3}});
+
+    for(int i = 6;  i <= 32; ++i)
+    {
+        std::cout << i << "------------\n";
+        vec.push_back(Data{"d5", {1, 2, 3}});
     }
 }
