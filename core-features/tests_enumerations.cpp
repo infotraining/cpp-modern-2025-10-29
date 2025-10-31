@@ -26,7 +26,7 @@ TEST_CASE("old style enums")
 
     std::underlying_type_t<OldStyleDaysOfWeek> value = day_of_week; // C++11
 
-    auto integer_value = std::to_underlying(day_of_week); // C++23
+    //auto integer_value = std::to_underlying(day_of_week); // C++23
 }
 
 enum class Coffee : uint8_t
