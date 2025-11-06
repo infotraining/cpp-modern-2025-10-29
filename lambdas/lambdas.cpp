@@ -5,6 +5,7 @@
 #include <set>
 #include <string>
 #include <vector>
+#include <queue>
 
 using namespace std;
 
@@ -326,4 +327,57 @@ TEST_CASE("passing lambdas as params")
         auto pos_gt_10 = StdExplain::Cpp20::find_if(vec, [factor](int n) { return (n * factor) > 10; });
         REQUIRE(*pos_gt_10 == 42);
     }
+}
+
+struct Device
+{
+    void on()
+    {
+        std::cout << "Device::on()\n";
+    }
+
+    void off()
+    {
+        std::cout << "Device::off()\n";
+    }
+};
+
+using Task = std::function<void()>;
+
+class TaskQueue
+{
+    std::queue<Task> q_;
+public:
+    template <typename Tsk>
+    void submit(Tsk&& task)
+    {
+        q_.push(std::forward<Tsk>(task));
+    }
+
+    void run()
+    {
+        while (not q_.empty())
+        {
+            Task task = q_.front();
+            task();
+            q_.pop();
+        }
+    }
+};
+
+TEST_CASE("TaskQueue")
+{
+    TaskQueue q;
+    Device dev;
+    bool is_started = false;
+
+    q.submit([]{ std::cout << "START\n"; });
+    q.submit([&dev] { dev.on(); });
+    q.submit([&dev] { dev.off(); });
+    q.submit([&is_started] { is_started = true; });
+    q.submit([]{ std::cout << "STOP\n"; });
+
+    REQUIRE(is_started == false);
+    q.run();
+    REQUIRE(is_started ==  true);
 }
