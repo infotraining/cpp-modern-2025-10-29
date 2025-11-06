@@ -8,6 +8,7 @@
 #include <numeric>
 #include <string>
 #include <vector>
+#include <thread>
 
 // https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#S-resource
 
@@ -199,4 +200,40 @@ TEST_CASE("custom deallocators")
 
         std::cout << "value: " << *int_with_malloc << "\n";
     }
+}
+
+TEST_CASE("shared_ptrs with threads")
+{
+    std::thread thd_1;
+    std::thread thd_2;
+
+    {
+        auto dict = std::make_shared<const std::map<int, std::string>>(
+            std::initializer_list<std::pair<const int, std::string>>{ {1, "one"}, {2, "two"} });
+
+        thd_1 = std::thread([dict] {
+            std::cout << "Thread#1 started..." << std::endl;
+            std::this_thread::sleep_for(1s);
+
+            auto pos = dict->find(1);
+            if (pos != dict->end())
+            {
+                std::cout << "item: " << pos->second << "\n";
+            }
+        });
+
+        thd_2 = std::thread([dict] {
+            std::cout << "Thread#2 started..." << std::endl;
+            std::this_thread::sleep_for(12s);
+
+            auto pos = dict->find(2);
+            if (pos != dict->end())
+            {
+                std::cout << "item: " << pos->second << "\n";
+            }
+        });
+    }
+
+    thd_1.join();
+    thd_2.join();
 }
