@@ -499,6 +499,49 @@ TEST_CASE("noexcept as operator")
 {
     foo_maybe_safe(SafeBar{});
     foo_maybe_safe(UnsafeBar{});
+}
+
+struct InefficientData
+{
+    int data;
+
+    InefficientData(int data) : data{data}
+    {
+        std::cout << "Ctor(data: " << data << ")\n";
+    }
+
+    InefficientData(const InefficientData& other)
+        : data(other.data)
+    {
+        std::cout << "Copy ctor(data: " << data << ")" << std::endl;
+    }
+
+    InefficientData(InefficientData&& other) noexcept
+        : data(other.data)
+    {
+        std::cout << "Move ctor(data: " << data << ")" << std::endl;
+    }
+};
+
+struct Holder
+{
+    InefficientData value;
+
+    Holder(InefficientData v) : value{v}
+    {}
+};
+
+TEST_CASE("InefficientData")
+{
+    std::vector<InefficientData> vec;
+
+    vec.push_back(InefficientData{1});
+    vec.push_back(InefficientData{2});
+    vec.push_back(InefficientData{3});
+    vec.push_back(InefficientData{4});
+
+    InefficientData my_inefficient_data = InefficientData{5};
+    Holder hld1{my_inefficient_data};
 
 
 }
