@@ -8,14 +8,15 @@
 
 using ToDo = void;
 
-using CallbackFunction = ToDo; 
+class TemperatureMonitor;
 
+using TempChangedCallback = std::function<void(TemperatureMonitor&, int)>; 
 
 // Implement the TemperatureMonitor class with observers support
 class TemperatureMonitor
 {
     std::string id_;
-    // TODO: add observers container
+    std::vector<TempChangedCallback> observers_;
     
 public:
     explicit TemperatureMonitor(std::string id)
@@ -28,7 +29,7 @@ public:
     {
         double temperature = current_temperature();
 
-        // notify_observers(temperature); // uncomment when implemented
+        notify_observers(temperature);
         
         return temperature;
     }
@@ -38,10 +39,19 @@ public:
         return id_;
     }
 
-    // TODO: add add_observer method
+    void add_observer(TempChangedCallback observer)
+    {
+        observers_.push_back(std::move(observer));
+    }
 
 protected:
-    // TODO: implement notify_observers method
+    void notify_observers(double current_temp)
+    {
+        for(auto& observer : observers_)
+        {
+            observer(*this, current_temp);
+        }
+    }
 
     virtual double current_temperature() = 0;
 };
@@ -89,16 +99,41 @@ public:
 
 auto todo = [](auto&&...) { throw std::logic_error("Not implemented"); };
 
+struct Fan
+{
+    void on()
+    {
+        std::cout << "Fan is on...\n";
+    }
+
+    void off()
+    {
+        std::cout << "Fan is off...\n";
+    }
+};
+
 TEST_CASE("lambda expressions - logging temperature monitor")
 {
     // Uncomment the code below
-    // Logger logger;
+    Logger logger;
+    Fan fan;
 
-    // FakeTemperatureMonitor monitor("TM-1", {25, 30, 28});
-    // monitor.add_observer(todo);
+    FakeTemperatureMonitor monitor("TM-1", {60, 30, 28});
+    
+    monitor.add_observer([&logger](TemperatureMonitor& temp_monitor, int temp) {
+         logger.log("Temperature " + temp_monitor.id() + ": " + std::to_string(temp) + "°C");
+    });
+    monitor.add_observer([&fan](TemperatureMonitor& temp_monitor, int temp) {
+        if (temp > 50)
+            fan.on();
+        else if (temp < 20)
+        {
+            fan.off();
+        } 
+    });
 
-    // monitor.read_temperature();
+    monitor.read_temperature();
 
-    // CHECK(logger.logs().size() == 1);
-    // CHECK(logger.logs().at(0) == "Temperature TM-1: 25°C");
+    CHECK(logger.logs().size() == 1);
+    CHECK(logger.logs().at(0) == "Temperature TM-1: 60°C");
 }
