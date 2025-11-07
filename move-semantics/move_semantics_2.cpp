@@ -77,22 +77,28 @@ namespace StdExplain
         }
     };
 
-    template <typename T>
-    UniquePtr<T> make_unique()
-    {
-        return UniquePtr<T>(new T());
-    }
+    // template <typename T>
+    // UniquePtr<T> make_unique()
+    // {
+    //     return UniquePtr<T>(new T());
+    // }
 
-    template <typename T, typename TArg1>
-    UniquePtr<T> make_unique(TArg1&& arg1)
-    {
-        return UniquePtr<T>(new T(std::forward<TArg1>(arg1)));
-    }
+    // template <typename T, typename TArg1>
+    // UniquePtr<T> make_unique(TArg1&& arg1)
+    // {
+    //     return UniquePtr<T>(new T(std::forward<TArg1>(arg1)));
+    // }
 
-    template <typename T, typename TArg1, typename TArg2>
-    UniquePtr<T> make_unique(TArg1&& arg1, TArg2&& arg2)
+    // template <typename T, typename TArg1, typename TArg2>
+    // UniquePtr<T> make_unique(TArg1&& arg1, TArg2&& arg2)
+    // {
+    //     return UniquePtr<T>(new T(std::forward<TArg1>(arg1), std::forward<TArg2>(arg2)));
+    // }
+
+    template <typename T, typename... TArgs>
+    UniquePtr<T> make_unique(TArgs&&... args)
     {
-        return UniquePtr<T>(new T(std::forward<TArg1>(arg1), std::forward<TArg2>(arg2)));
+        return UniquePtr<T>(new T(std::forward<TArgs>(args)...));
     }
 
     UniquePtr<Gadget> create_gadget()
@@ -106,9 +112,8 @@ namespace StdExplain
 
 TEST_CASE("move semantics - UniquePtr")
 {
-    using StdExplain::UniquePtr;
     using StdExplain::create_gadget;
-
+    using StdExplain::UniquePtr;
 
     UniquePtr<int> ptr_int = nullptr;
 
