@@ -22,10 +22,10 @@ namespace StdExplain
 template <typename... TTail>
 void print_anything(const std::string& head, const TTail&... tail)
 {
-    
-    std::cout << "'" << head <<  "' ";
-    
-    if constexpr(sizeof...(tail) > 0)
+
+    std::cout << "'" << head << "' ";
+
+    if constexpr (sizeof...(tail) > 0)
         print_anything(tail...);
     else
         std::cout << "\n";
@@ -34,10 +34,10 @@ void print_anything(const std::string& head, const TTail&... tail)
 template <typename THead, typename... TTail>
 void print_anything(const THead& head, const TTail&... tail)
 {
-    
+
     std::cout << head << " ";
-    
-    if constexpr(sizeof...(tail) > 0)
+
+    if constexpr (sizeof...(tail) > 0)
         print_anything(tail...);
     else
         std::cout << "\n";
@@ -53,4 +53,36 @@ TEST_CASE("variadic templates")
 
     auto ptr_general = std::make_unique<std::string>(4, '*');
     REQUIRE(*ptr_general == "****");
+}
+
+namespace FoldExpressions
+{
+    template <typename... TValues>
+    auto sum(TValues... values)
+    {
+        return (... + values); // left-fold (((1 + 2) + 3) + 4)
+    }
+
+    template <typename... TArgs>
+    void print_anything(const TArgs&... args)
+    {
+        (..., (std::cout << args << " ")) << "\n";
+    }
+
+    template<typename F, typename... TArgs>
+    void call_for_each(F&& func, TArgs&&... args)
+    {
+        (..., func(std::forward<TArgs>(args)));
+    }
+} // namespace FoldExpressions 
+
+TEST_CASE("fold expression")
+{
+    REQUIRE(FoldExpressions::sum(1, 2, 3, 4) == 10);
+    REQUIRE(FoldExpressions::sum(1, 2, 3, 4, 5) == 15);
+
+    FoldExpressions::print_anything(1, 3, 14, "text"s);
+    auto printer = [](const auto& item) { std::cout << "item: " << item << "\n"; };
+
+    FoldExpressions::call_for_each(printer, 1, 3.14, "text"s);
 }
