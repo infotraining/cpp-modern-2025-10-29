@@ -6,45 +6,58 @@
 
 // TODO: implement to_int(std::string_view) function
 
-// TEST_CASE("to_int returning optional")
-// {
-//     SECTION("happy path")
-//     {
-//         using namespace std::literals;
+std::optional<int> to_int(const std::string& s)
+{
+    try
+    {
+        int result = std::stoi(s);
+        return result;
+    }
+    catch(...)
+    {
+        return std::nullopt;
+    }
+}
 
-//         SECTION("string to int")
-//         {
-//             auto result = to_int("123"s);
+TEST_CASE("to_int returning optional")
+{
+    SECTION("happy path")
+    {
+        using namespace std::literals;
 
-//             REQUIRE(result.has_value());
-//             REQUIRE(*result == 123);
-//         }
+        SECTION("string to int")
+        {
+            auto result = to_int("123"s);
 
-//         SECTION("const char* to int")
-//         {
-//             auto result = to_int("123");
+            REQUIRE(result.has_value());
+            REQUIRE(*result == 123);
+        }
 
-//             REQUIRE(result.has_value());
-//             REQUIRE(*result == 123);
-//         }
-//     }
+        SECTION("const char* to int")
+        {
+            auto result = to_int("123");
 
-//     SECTION("sad path")
-//     {
-//         SECTION("whole string invalid")
-//         {
-//             auto result = to_int("a");
+            REQUIRE(result.has_value());
+            REQUIRE(*result == 123);
+        }
+    }
 
-//             REQUIRE_FALSE(result.has_value());
-//         }
+    SECTION("sad path")
+    {
+        SECTION("whole string invalid")
+        {
+            auto result = to_int("a");
 
-//         SECTION("part of string is invalid")
-//         {
-//             using namespace std::literals;
+            REQUIRE_FALSE(result.has_value());
+        }
 
-//             auto result = to_int("123a4"sv);
+        SECTION("part of string is invalid")
+        {
+            using namespace std::literals;
 
-//             REQUIRE_FALSE(result.has_value());
-//         }
-//     }
-// }
+            auto result = to_int("123a4"s);
+
+            REQUIRE_FALSE(result.has_value());
+        }
+    }
+}
