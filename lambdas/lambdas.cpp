@@ -170,14 +170,14 @@ TEST_CASE("capturing this")
     prn_1.info();
 }
 
-TEST_CASE("init captures")
-{
-    std::unique_ptr<int> ptr_factor = std::make_unique<int>(42);
+// TEST_CASE("init captures")
+// {
+//     std::unique_ptr<int> ptr_factor = std::make_unique<int>(42);
 
-    auto multiply_by = [ptr_factor = std::move(ptr_factor)](int x) {
-        return x * (*ptr_factor);
-    };
-}
+//     auto multiply_by = [ptr_factor = std::move(ptr_factor)](int x) {
+//         return x * (*ptr_factor);
+//     };
+// }
 
 auto create_generator(int seed)
 {

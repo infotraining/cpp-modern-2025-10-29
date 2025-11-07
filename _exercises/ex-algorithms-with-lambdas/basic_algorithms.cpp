@@ -42,12 +42,12 @@ TEST_CASE("lambda exercise")
         REQUIRE_THAT(evens, Equals(vector<int>{6, 8, 12, 10}));
     }
 
-    SECTION("copy evens to vector - C++23")
-    {
-        std::vector evens = data
-            | std::views::filter([](int n) { return n % 2 == 0; })
-            | std::ranges::to<vector>();
-    }
+    // SECTION("copy evens to vector - C++23")
+    // {
+    //     std::vector evens = data
+    //         | std::views::filter([](int n) { return n % 2 == 0; })
+    //         | std::ranges::to<vector>();
+    // }
 
     SECTION("create container with squares - std::transform")
     {
@@ -71,14 +71,14 @@ TEST_CASE("lambda exercise")
             REQUIRE_THAT(squares, Equals(vector<int>{1, 36, 9, 25, 64, 81, 169, 144, 100, 2025}));
         }
 
-        SECTION("ver_3 - C++23")
-        {
-            vector<int> squares = data
-                | std::views::transform([](int value) { return value * value; })
-                | std::ranges::to<vector>();
+        // SECTION("ver_3 - C++23")
+        // {
+        //     vector<int> squares = data
+        //         | std::views::transform([](int value) { return value * value; })
+        //         | std::ranges::to<vector>();
 
-            REQUIRE_THAT(squares, Equals(vector<int>{1, 36, 9, 25, 64, 81, 169, 144, 100, 2025}));
-        }
+        //     REQUIRE_THAT(squares, Equals(vector<int>{1, 36, 9, 25, 64, 81, 169, 144, 100, 2025}));
+        // }
     }
 
     SECTION("remove from container items divisible by any number from a given array - std::remove_if")
