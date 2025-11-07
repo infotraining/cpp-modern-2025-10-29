@@ -213,7 +213,7 @@ TEST_CASE("shared_ptrs with threads")
 
         thd_1 = std::thread([dict] {
             std::cout << "Thread#1 started..." << std::endl;
-            std::this_thread::sleep_for(1s);
+            std::this_thread::sleep_for(100ms);
 
             auto pos = dict->find(1);
             if (pos != dict->end())
@@ -224,7 +224,7 @@ TEST_CASE("shared_ptrs with threads")
 
         thd_2 = std::thread([dict] {
             std::cout << "Thread#2 started..." << std::endl;
-            std::this_thread::sleep_for(12s);
+            std::this_thread::sleep_for(200ms);
 
             auto pos = dict->find(2);
             if (pos != dict->end())
